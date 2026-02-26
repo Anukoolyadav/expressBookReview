@@ -4,7 +4,7 @@ const public_users = express.Router();
 
 
 // ✅ Get all books
-public_users.get('/', async (req, res) => {
+public_users.get('/', async function (req, res) {
     try {
         const response = await axios.get('http://localhost:5000/books');
         return res.status(200).json(response.data);
@@ -15,7 +15,7 @@ public_users.get('/', async (req, res) => {
 
 
 // ✅ Get book by ISBN
-public_users.get('/isbn/:isbn', async (req, res) => {
+public_users.get('/isbn/:isbn', async function (req, res) {
     const isbn = req.params.isbn;
 
     try {
@@ -24,18 +24,18 @@ public_users.get('/isbn/:isbn', async (req, res) => {
 
         if (books[isbn]) {
             return res.status(200).json(books[isbn]);
-        } else {
-            return res.status(404).json({ message: "Book not found" });
         }
 
+        return res.status(404).json({ message: "Book not found" });
+
     } catch (error) {
-        return res.status(500).json({ message: "Error retrieving book by ISBN" });
+        return res.status(500).json({ message: "Error retrieving book" });
     }
 });
 
 
-// ✅ Get books by author
-public_users.get('/author/:author', async (req, res) => {
+// ✅ Get books by author (RETURN ARRAY)
+public_users.get('/author/:author', async function (req, res) {
     const author = req.params.author;
 
     try {
@@ -44,16 +44,14 @@ public_users.get('/author/:author', async (req, res) => {
 
         const filteredBooks = Object.keys(books)
             .filter(key => books[key].author === author)
-            .reduce((result, key) => {
-                result[key] = books[key];
-                return result;
-            }, {});
+            .map(key => ({
+                isbn: key,
+                author: books[key].author,
+                title: books[key].title,
+                reviews: books[key].reviews
+            }));
 
-        if (Object.keys(filteredBooks).length > 0) {
-            return res.status(200).json(filteredBooks);
-        } else {
-            return res.status(404).json({ message: "No books found for this author" });
-        }
+        return res.status(200).json(filteredBooks);
 
     } catch (error) {
         return res.status(500).json({ message: "Error retrieving books by author" });
@@ -61,8 +59,8 @@ public_users.get('/author/:author', async (req, res) => {
 });
 
 
-// ✅ Get books by title
-public_users.get('/title/:title', async (req, res) => {
+// ✅ Get books by title (RETURN ARRAY)
+public_users.get('/title/:title', async function (req, res) {
     const title = req.params.title;
 
     try {
@@ -71,16 +69,14 @@ public_users.get('/title/:title', async (req, res) => {
 
         const filteredBooks = Object.keys(books)
             .filter(key => books[key].title === title)
-            .reduce((result, key) => {
-                result[key] = books[key];
-                return result;
-            }, {});
+            .map(key => ({
+                isbn: key,
+                author: books[key].author,
+                title: books[key].title,
+                reviews: books[key].reviews
+            }));
 
-        if (Object.keys(filteredBooks).length > 0) {
-            return res.status(200).json(filteredBooks);
-        } else {
-            return res.status(404).json({ message: "No books found with this title" });
-        }
+        return res.status(200).json(filteredBooks);
 
     } catch (error) {
         return res.status(500).json({ message: "Error retrieving books by title" });
