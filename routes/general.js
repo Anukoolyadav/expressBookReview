@@ -1,94 +1,89 @@
 const express = require('express');
 const axios = require('axios');
-let books = require("./booksdb.js");
-
 const public_users = express.Router();
 
 
-// ✅ Task 1: Get all books using async/await with Axios
-public_users.get('/', async function (req, res) {
+// ✅ Get all books
+public_users.get('/', async (req, res) => {
     try {
-        const response = await axios.get('http://localhost:5000/');
+        const response = await axios.get('http://localhost:5000/books');
         return res.status(200).json(response.data);
     } catch (error) {
-        return res.status(500).json({ message: "Error fetching books" });
+        return res.status(500).json({ message: "Error retrieving books" });
     }
 });
 
 
-// ✅ Task 2: Get book by ISBN using async/await
-public_users.get('/isbn/:isbn', async function (req, res) {
+// ✅ Get book by ISBN
+public_users.get('/isbn/:isbn', async (req, res) => {
     const isbn = req.params.isbn;
 
     try {
-        const response = await axios.get('http://localhost:5000/');
-        const booksData = response.data;
+        const response = await axios.get('http://localhost:5000/books');
+        const books = response.data;
 
-        if (booksData[isbn]) {
-            return res.status(200).json(booksData[isbn]);
+        if (books[isbn]) {
+            return res.status(200).json(books[isbn]);
         } else {
             return res.status(404).json({ message: "Book not found" });
         }
+
     } catch (error) {
-        return res.status(500).json({ message: "Error retrieving book" });
+        return res.status(500).json({ message: "Error retrieving book by ISBN" });
     }
 });
 
 
-// ✅ Task 3: Get books by Author using async/await
-public_users.get('/author/:author', async function (req, res) {
+// ✅ Get books by author
+public_users.get('/author/:author', async (req, res) => {
     const author = req.params.author;
 
     try {
-        const response = await axios.get('http://localhost:5000/');
-        const booksData = response.data;
+        const response = await axios.get('http://localhost:5000/books');
+        const books = response.data;
 
-        const filteredBooks = Object.keys(booksData)
-            .filter(key => booksData[key].author === author)
-            .map(key => ({
-                isbn: key,
-                author: booksData[key].author,
-                title: booksData[key].title
-            }));
+        const filteredBooks = Object.keys(books)
+            .filter(key => books[key].author === author)
+            .reduce((result, key) => {
+                result[key] = books[key];
+                return result;
+            }, {});
 
-        return res.status(200).json(filteredBooks);
+        if (Object.keys(filteredBooks).length > 0) {
+            return res.status(200).json(filteredBooks);
+        } else {
+            return res.status(404).json({ message: "No books found for this author" });
+        }
+
     } catch (error) {
         return res.status(500).json({ message: "Error retrieving books by author" });
     }
 });
 
 
-// ✅ Task 4: Get books by Title using async/await
-public_users.get('/title/:title', async function (req, res) {
+// ✅ Get books by title
+public_users.get('/title/:title', async (req, res) => {
     const title = req.params.title;
 
     try {
-        const response = await axios.get('http://localhost:5000/');
-        const booksData = response.data;
+        const response = await axios.get('http://localhost:5000/books');
+        const books = response.data;
 
-        const filteredBooks = Object.keys(booksData)
-            .filter(key => booksData[key].title === title)
-            .map(key => ({
-                isbn: key,
-                author: booksData[key].author,
-                title: booksData[key].title
-            }));
+        const filteredBooks = Object.keys(books)
+            .filter(key => books[key].title === title)
+            .reduce((result, key) => {
+                result[key] = books[key];
+                return result;
+            }, {});
 
-        return res.status(200).json(filteredBooks);
+        if (Object.keys(filteredBooks).length > 0) {
+            return res.status(200).json(filteredBooks);
+        } else {
+            return res.status(404).json({ message: "No books found with this title" });
+        }
+
     } catch (error) {
         return res.status(500).json({ message: "Error retrieving books by title" });
-    }
-});
-
-
-// ✅ Task 5: Get book review
-public_users.get('/review/:isbn', function (req, res) {
-    const isbn = req.params.isbn;
-
-    if (books[isbn]) {
-        return res.status(200).json(books[isbn].reviews);
-    } else {
-        return res.status(404).json({ message: "Book not found" });
     }
 });
 
